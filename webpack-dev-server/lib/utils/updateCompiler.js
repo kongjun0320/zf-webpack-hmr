@@ -8,7 +8,7 @@ function updateCompiler(compiler) {
   options.entry.main.import.unshift(
     require.resolve('../../../webpack/hot/dev-server.js')
   );
-  console.log('options.entry >>> ', options.entry);
+  // console.log('options.entry >>> ', options.entry);
   // 把入口变更之后，你得通知 webpack 按新的入口进行编译
   compiler.hooks.entryOption.call(options.context, options.entry);
 }

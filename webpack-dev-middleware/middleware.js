@@ -27,6 +27,7 @@ function wrapper({ fs, outputPath }) {
       }
     } catch (error) {
       console.log('error >>> ', error);
+      next(error);
       res.sendStatus(404);
     }
   };
