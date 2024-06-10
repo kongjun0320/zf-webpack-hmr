@@ -5,11 +5,16 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 module.exports = {
   mode: 'development',
   devtool: false,
-  entry: './src/index.js',
+  entry: [
+    path.resolve('./webpack-dev-server/client/index.js'),
+    path.resolve('./webpack/hot/dev-server.js'),
+    './src/index.js',
+  ],
   output: {
     filename: '[name].js',
     // 默认的静态文件服务器
     path: path.resolve(__dirname, 'dist'),
+
     // 热更新的全局变量名
     // hotUpdateGlobal: ''
   },

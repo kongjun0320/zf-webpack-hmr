@@ -1,6 +1,6 @@
 const render = () => {
   const title = require('./title.js');
-  root.innerText = title;
+  document.getElementById('root').innerText = title;
 };
 
 render();
