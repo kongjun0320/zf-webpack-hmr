@@ -14,9 +14,8 @@ module.exports = {
     filename: '[name].js',
     // 默认的静态文件服务器
     path: path.resolve(__dirname, 'dist'),
-
     // 热更新的全局变量名
-    // hotUpdateGlobal: ''
+    hotUpdateGlobal: 'webpackHotUpdate',
   },
   devServer: {
     hot: true, // 支持热更新
@@ -31,6 +30,6 @@ module.exports = {
       template: './public/index.html',
     }),
     // 此处可写可不写，因为如果 devServer.hot = true 的话，webpack 会自动添加
-    // new HotModuleReplacementPlugin(),
+    new HotModuleReplacementPlugin(),
   ],
 };

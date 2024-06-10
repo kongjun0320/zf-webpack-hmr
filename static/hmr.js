@@ -1,6 +1,63 @@
 (() => {
+  // 当前最新的 hash 值
+  var currentHash;
+  // 上一次的 hash 值
+  var lastHash;
   function hotCheck() {
     console.log('开始进行热更新的检查');
+    hotDownloadManifest()
+      .then((update) => {
+        console.log('update >>> ', update);
+        update.c.forEach((chunkId) => {
+          hotDownloadUpdateChunk(chunkId);
+        });
+        lastHash = currentHash;
+      })
+      .catch((error) => {
+        console.log('error >>> ', error);
+        window.location.reload();
+      });
+  }
+
+  function hotDownloadUpdateChunk(chunkId) {
+    let script = document.createElement('script');
+    script.src = `${chunkId}.${lastHash}.hot-update.js`;
+    document.head.appendChild(script);
+  }
+
+  self['webpackHotUpdate'] = function (chunkId, moreModules) {
+    hotAddUpdateChunk(chunkId, moreModules);
+  };
+
+  let hotUpdate = {};
+  function hotAddUpdateChunk(chunkId, moreModules) {
+    for (const moduleId in moreModules) {
+      // 合并到模块定义对象里
+      hotUpdate[moduleId] = webpackModules[moduleId] = moreModules[moduleId];
+    }
+    hotApply();
+  }
+
+  function hotApply() {
+    for (const moduleId in hotUpdate) {
+      // 获取到老的模块
+      const oldModule = webpackModuleCache[moduleId];
+      // 删除老的缓存
+      delete webpackModuleCache[moduleId];
+      // 入口模块就没有父亲
+      if (oldModule.parents && oldModule.parents.size > 0) {
+        const parents = oldModule.parents;
+        parents.forEach((parent) => {
+          parent.hot.check(moduleId);
+        });
+      }
+    }
+  }
+
+  function hotDownloadManifest() {
+    return fetch(`main.${lastHash}.hot-update.json`).then((response) =>
+      response.json()
+    );
   }
 
   var webpackModules = {
@@ -10,7 +67,8 @@
         document.getElementById('root').innerText = title;
       };
       render();
-      if (false) {
+      if (module.hot) {
+        module.hot.accept(['./src/title.js'], render);
       }
     },
     './src/title.js': (module) => {
@@ -41,7 +99,10 @@
           hot._acceptedDependencies[deps[i]] = callback;
         }
       },
-      // check: hotCheck,
+      check(moduleId) {
+        const callback = hot._acceptedDependencies[moduleId];
+        callback && callback();
+      },
     };
     return hot;
   }
@@ -84,7 +145,6 @@
   (() => {
     const hotEmitter = webpackRequire('./webpack/hot/emitter.js');
     const socket = io();
-    let currentHash;
     socket.on('hash', (hash) => {
       console.log('客户端接收到 hash 消息');
       currentHash = hash;
@@ -101,12 +161,17 @@
     const hotEmitter = webpackRequire('./webpack/hot/emitter.js');
     hotEmitter.on('webpackHotUpdate', (currentHash) => {
       console.log('dev-server 收到了最新的 Hash >>> ', currentHash);
+      // 第一次
+      if (!lastHash) {
+        lastHash = currentHash;
+        console.log('这是第一次收到 hash 值，首次渲染 >>> ');
+        return;
+      }
+      console.log('lastHash >>> ', lastHash, currentHash, '开始真正执行热更新');
+      hotCheck();
     });
   })();
   (() => {
-    setTimeout(() => {
-      console.log('cache >>> ', webpackModuleCache);
-    }, 1000);
     return hotCreateRequire('./src/index.js')('./src/index.js');
   })();
 })();

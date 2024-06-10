@@ -9,6 +9,9 @@ const mime = require('mime');
 function wrapper({ fs, outputPath }) {
   return (req, res, next) => {
     let url = req.url;
+
+    if (url === '/favicon.ico') return res.sendStatus(404);
+
     if (url === '/') {
       url = '/index.html';
     }
